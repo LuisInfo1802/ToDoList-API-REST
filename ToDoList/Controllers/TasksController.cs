@@ -43,20 +43,36 @@ namespace ToDoList.Controllers
             var created = await _taskRepository.InsertTask(task);
             return Created("created", created);
         }
-        [HttpPut]
-        public async Task<IActionResult> UpdateTask([FromBody] Tasks task)
+        [HttpPut("{id}")]
+        public async Task<IActionResult> UpdateTask(int id, [FromBody] Tasks task)
         {
-            if (task == null)
+            if (task == null || id != task.Id)
             {
                 return BadRequest();
             }
+
             if (!ModelState.IsValid)
             {
                 return BadRequest(ModelState);
             }
-             await _taskRepository.UpdateTask(task);
-            return NoContent();
+
+            var existingTask = await _taskRepository.GetTasks(id);
+            if (existingTask == null)
+            {
+                return NotFound(); 
+            }
+
+            
+            existingTask.Title = task.Title;
+            existingTask.Description = task.Description;
+            existingTask.IsComplete = task.IsComplete;
+            existingTask.CreateAt = task.CreateAt;
+
+            await _taskRepository.UpdateTask(existingTask);
+
+            return NoContent(); 
         }
+
         [HttpDelete]
         public async Task<IActionResult> DeleteTask(int id)
         {
